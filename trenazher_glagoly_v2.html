@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Тренажёр: неправильные глаголы</title>
+<style>
+  :root{
+    --bg:#1B2A4A; --card:#22345C; --card2:#2C4270;
+    --teal:#1F6F78; --cyan:#3FC1C9; --amber:#F5A623; --red:#E5484D;
+    --lime:#7BE0AD; --sand:#EDE3D2; --ink:#0E1830; --muted:#9DB0D0;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;padding:0}
+  body{
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;
+    background:var(--bg); color:var(--sand);
+    min-height:100vh; display:flex; flex-direction:column; align-items:center;
+    padding:16px; user-select:none;
+  }
+  .wrap{width:100%; max-width:460px}
+  header{display:flex; justify-content:space-between; align-items:center; margin-bottom:10px}
+  h1{font-size:17px; margin:0; font-weight:600; color:var(--cyan)}
+  .stats{font-size:12px; color:var(--muted); text-align:right; line-height:1.4}
+  .progress-outer{height:8px; background:var(--ink); border-radius:6px; overflow:hidden; margin:8px 0 14px}
+  .progress-inner{height:100%; width:0%; background:var(--lime); transition:width .4s}
+  .row{display:flex; gap:8px; margin-bottom:12px}
+  .row.small{gap:6px}
+  .chip{flex:1; text-align:center; font-size:13px; padding:9px 4px; border-radius:10px;
+    background:transparent; border:2px solid var(--card2); color:var(--muted); cursor:pointer; font-weight:600}
+  .chip.active{background:var(--card2); color:#fff; border-color:var(--cyan)}
+  .chip.locked{opacity:.4; cursor:not-allowed}
+  .card{background:var(--card); border-radius:18px; padding:24px 20px; text-align:center;
+    box-shadow:0 6px 20px rgba(0,0,0,.25)}
+  .prompt-label{font-size:12px; color:var(--muted); margin-bottom:6px}
+  .prompt{font-size:30px; font-weight:700; color:#fff; margin:4px 0; line-height:1.2}
+  .prompt-sub{font-size:14px; color:var(--cyan); margin-bottom:18px; min-height:18px}
+  input[type=text]{
+    width:100%; font-size:22px; text-align:center; padding:13px 10px;
+    border:2px solid var(--card2); border-radius:12px; background:var(--ink);
+    color:#fff; outline:none; margin-bottom:12px;
+  }
+  input[type=text]:focus{border-color:var(--cyan)}
+  .btn{width:100%; font-size:17px; font-weight:600; padding:14px; border:none;
+    border-radius:12px; cursor:pointer; margin-bottom:8px; color:#fff; background:var(--teal)}
+  .btn.amber{background:var(--amber); color:var(--ink)}
+  .btn:active{transform:scale(.98)}
+  .btn.secondary{background:transparent; border:2px solid var(--card2); color:var(--muted); font-size:14px; padding:10px}
+  .choices{display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:12px}
+  .choice{font-size:16px; padding:16px 8px; border-radius:12px; background:var(--card2);
+    color:#fff; cursor:pointer; border:2px solid transparent; font-weight:600; line-height:1.3}
+  .choice:active{transform:scale(.97)}
+  .choice.correct{background:var(--lime); color:var(--ink); border-color:var(--lime)}
+  .choice.wrong{background:var(--red); color:#fff; border-color:var(--red)}
+  .feedback{min-height:50px; margin:4px 0; font-size:15px; font-weight:600}
+  .feedback.ok{color:var(--lime)}
+  .feedback.no{color:var(--red)}
+  .correct-answer{font-size:20px; color:#fff; font-weight:700; margin-top:2px}
+  .stars{font-size:14px; letter-spacing:2px; margin-top:8px; min-height:18px}
+  .hidden{display:none}
+  .hint{font-size:12px; color:var(--muted); margin-top:8px; line-height:1.5; text-align:center}
+  footer{margin-top:18px; font-size:12px; color:var(--muted); text-align:center; line-height:1.6}
+  .reset{color:var(--muted); text-decoration:underline; cursor:pointer; font-size:12px}
+  .timer{font-size:34px; font-weight:700; color:var(--amber); margin-bottom:6px}
+  .timer.low{color:var(--red)}
+  .bigscore{font-size:44px; font-weight:700; color:var(--lime); margin:10px 0}
+  .center{text-align:center}
+  .lockmsg{font-size:14px; color:var(--amber); margin:12px 0; line-height:1.5}
+  .grouptitle{font-size:13px; color:var(--muted); text-align:center; margin-bottom:4px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Неправильные глаголы</h1>
+    <div class="stats" id="stats">—</div>
+  </header>
+  <div class="progress-outer"><div class="progress-inner" id="progress"></div></div>
+
+  <div class="grouptitle">Группа</div>
+  <div class="row small" id="groupRow">
+    <div class="chip active" data-group="A">be – leave</div>
+    <div class="chip" data-group="B">lend – write</div>
+    <div class="chip locked" data-group="MIX" id="mixChip">🏁 Финал</div>
+  </div>
+
+  <div class="row small" id="levelRow">
+    <div class="chip active" data-lvl="1">1</div>
+    <div class="chip" data-lvl="2">2</div>
+    <div class="chip" data-lvl="3">3</div>
+    <div class="chip" data-lvl="4">4</div>
+  </div>
+
+  <!-- ОБЫЧНАЯ ИГРА -->
+  <div id="game">
+    <div class="card">
+      <div class="prompt-label" id="promptLabel">—</div>
+      <div class="prompt" id="prompt">—</div>
+      <div class="prompt-sub" id="promptSub"></div>
+
+      <div id="typeMode">
+        <input type="text" id="answer" autocomplete="off" autocorrect="off"
+          autocapitalize="off" spellcheck="false" placeholder="ваш ответ">
+      </div>
+      <div id="choiceMode" class="hidden">
+        <div class="choices" id="choices"></div>
+      </div>
+
+      <div class="feedback" id="feedback"></div>
+      <button class="btn amber" id="checkBtn">Проверить</button>
+      <button class="btn secondary hidden" id="nextBtn">Дальше →</button>
+      <div class="stars" id="stars"></div>
+    </div>
+    <div class="hint" id="hint"></div>
+  </div>
+
+  <!-- ФИНАЛ НА ВРЕМЯ -->
+  <div id="timedIntro" class="card center hidden">
+    <div class="prompt-label">Финальный уровень</div>
+    <div class="prompt" style="font-size:24px">Все глаголы на время</div>
+    <div class="prompt-sub">60 секунд · печать · сколько успеешь</div>
+    <p style="font-size:14px;color:var(--muted);line-height:1.5">
+      Показываю русский перевод — печатаешь английский глагол.<br>
+      Enter — засчитать и дальше. Успей больше, чем в прошлый раз!</p>
+    <div class="hint" id="recordHint"></div>
+    <button class="btn amber" id="startTimedBtn">Старт</button>
+  </div>
+
+  <div id="timedGame" class="card center hidden">
+    <div class="timer" id="timer">60</div>
+    <div class="prompt-label">Переведите (инфинитив)</div>
+    <div class="prompt" id="tPrompt">—</div>
+    <input type="text" id="tAnswer" autocomplete="off" autocorrect="off"
+      autocapitalize="off" spellcheck="false" placeholder="англ. глагол" style="margin-top:14px">
+    <div style="font-size:14px;color:var(--muted)">Верно: <b id="tScore" style="color:var(--lime)">0</b></div>
+  </div>
+
+  <div id="timedDone" class="card center hidden">
+    <div class="prompt-label">Время вышло!</div>
+    <div class="bigscore" id="finalScore">0</div>
+    <div id="recordMsg" style="font-size:15px;margin-bottom:14px"></div>
+    <button class="btn amber" id="againBtn">Ещё раз</button>
+    <button class="btn secondary" id="backBtn">Назад к уровням</button>
+  </div>
+
+  <footer>
+    Прогресс сохраняется на этом устройстве.<br>
+    <span class="reset" id="resetBtn">Сбросить весь прогресс</span>
+  </footer>
+</div>
+
+<script>
+// ============ ДАННЫЕ ============
+// Группа A: be–leave, Группа B: lend–write (как в таблице)
+const GROUP_A=[
+  ["be","was/were","been","быть"],["become","became","become","становиться"],
+  ["begin","began","begun","начинать"],["break","broke","broken","ломать"],
+  ["bring","brought","brought","приносить"],["build","built","built","строить"],
+  ["buy","bought","bought","покупать"],["catch","caught","caught","ловить"],
+  ["choose","chose","chosen","выбирать"],["come","came","come","приходить"],
+  ["cost","cost","cost","стоить"],["cut","cut","cut","резать"],
+  ["do","did","done","делать"],["draw","drew","drawn","рисовать"],
+  ["drink","drank","drunk","пить"],["drive","drove","driven","водить"],
+  ["eat","ate","eaten","есть"],["fall","fell","fallen","падать"],
+  ["feel","felt","felt","чувствовать"],["find","found","found","находить"],
+  ["fly","flew","flown","летать"],["forget","forgot","forgotten","забывать"],
+  ["get","got","got","получать"],["give","gave","given","давать"],
+  ["go","went","gone","идти"],["grow","grew","grown","расти"],
+  ["have","had","had","иметь"],["hear","heard","heard","слышать"],
+  ["keep","kept","kept","хранить"],["know","knew","known","знать"],
+  ["learn","learnt","learnt","учить"],["leave","left","left","покидать"]
+];
+const GROUP_B=[
+  ["lend","lent","lent","одалживать"],["let","let","let","позволять"],
+  ["lie","lay","lain","лежать"],["light","lit","lit","зажигать"],
+  ["lose","lost","lost","терять"],["make","made","made","делать"],
+  ["mean","meant","meant","означать"],["meet","met","met","встречать"],
+  ["pay","paid","paid","платить"],["put","put","put","класть"],
+  ["read","read","read","читать"],["ride","rode","ridden","ездить верхом"],
+  ["ring","rang","rung","звонить"],["rise","rose","risen","подниматься"],
+  ["run","ran","run","бежать"],["say","said","said","говорить"],
+  ["see","saw","seen","видеть"],["sell","sold","sold","продавать"],
+  ["send","sent","sent","отправлять"],["sing","sang","sung","петь"],
+  ["sit","sat","sat","сидеть"],["sleep","slept","slept","спать"],
+  ["speak","spoke","spoken","говорить"],["spend","spent","spent","тратить"],
+  ["stand","stood","stood","стоять"],["swim","swam","swum","плавать"],
+  ["take","took","taken","брать"],["teach","taught","taught","обучать"],
+  ["tell","told","told","рассказывать"],["think","thought","thought","думать"],
+  ["throw","threw","thrown","бросать"],["understand","understood","understood","понимать"],
+  ["wake","woke","woken","просыпаться"],["wear","wore","worn","носить (одежду)"],
+  ["win","won","won","выигрывать"],["write","wrote","written","писать"]
+];
+const GROUPS={A:GROUP_A, B:GROUP_B};
+const ALL=[...GROUP_A, ...GROUP_B];
+
+// ============ УРОВНИ ============
+// 1: выбор из 4 (EN->RU)   2: печать перевода (EN->RU)
+// 3: печать глагола (RU->EN)   4: печать трёх форм (RU->EN)
+const LEVELS={
+  1:{label:"выбор перевода",promptLabel:"Выберите перевод",input:"choice",
+     getPrompt:v=>v[0],getSub:v=>"",getAnswer:v=>v[3],lang:"ru"},
+  2:{label:"перевод",promptLabel:"Напишите перевод (рус.)",input:"type",
+     getPrompt:v=>v[0],getSub:v=>"",getAnswer:v=>v[3],lang:"ru"},
+  3:{label:"глагол",promptLabel:"Напишите глагол (англ., инфинитив)",input:"type",
+     getPrompt:v=>v[3],getSub:v=>"",getAnswer:v=>v[0],lang:"en"},
+  4:{label:"три формы",promptLabel:"Три формы (через пробел)",input:"type",
+     getPrompt:v=>v[3],getSub:v=>"V1  V2  V3",getAnswer:v=>v[0]+" "+v[1]+" "+v[2],lang:"en"}
+};
+const UNLOCK_PCT=80; // % освоения обеих групп для разблокировки финала
+
+// ============ ХРАНЕНИЕ / SM-2 ============
+const KEY="irregular_trainer_v2";
+let state=load();
+let group=state.group||"A";
+let level=state.level||1;
+let step=state.step||0;
+let current=null, answered=false;
+
+function load(){
+  try{const s=JSON.parse(localStorage.getItem(KEY)); if(s&&s.cards)return s;}catch(e){}
+  return fresh();
+}
+function fresh(){
+  const cards={};
+  ["A","B"].forEach(g=>{
+    GROUPS[g].forEach((v,i)=>{
+      for(let l=1;l<=4;l++) cards[g+"_"+l+"_"+i]={ease:2.5,interval:0,due:0,reps:0,mastery:0};
+    });
+  });
+  return {cards,group:"A",level:1,step:0,answers:0,bestTimed:0};
+}
+function save(){state.group=group;state.level=level;state.step=step;
+  try{localStorage.setItem(KEY,JSON.stringify(state));}catch(e){}}
+
+function norm(s){return s.toLowerCase().trim().replace(/\s+/g," ").replace(/[.,;!?]/g,"");}
+function check(input,verb,lvl){
+  const correct=LEVELS[lvl].getAnswer(verb); const ni=norm(input);
+  if(lvl===1||lvl===2){ // RU перевод
+    const variants=[];
+    correct.split(/[,/]/).forEach(p=>{variants.push(norm(p));variants.push(norm(p.replace(/\(.*?\)/g,"")));});
+    const niNoBr=ni.replace(/\(.*?\)/g,"").trim();
+    return variants.some(x=>x&&(x===ni||x===niNoBr));
+  } else if(lvl===4){
+    const c=norm(correct).replace("was/were","was");
+    const inp=ni.replace("was/were","was").replace(/[-]/g," ");
+    if(verb[0]==="be")return ["be was been","be were been"].includes(inp);
+    return c===inp;
+  } else return norm(correct)===ni; // lvl 3
+}
+
+function poolFor(g,l){
+  return GROUPS[g].map((v,i)=>({key:g+"_"+l+"_"+i,i,verb:v,card:state.cards[g+"_"+l+"_"+i]}));
+}
+function pick(){
+  const pool=poolFor(group,level);
+  const due=pool.filter(p=>p.card.due<=step);
+  const base=due.length?due:pool;
+  // среди кандидатов: приоритет трудным (низкий mastery/ease), но с рандомом чтобы не по алфавиту
+  const sorted=base.slice().sort((a,b)=>{
+    if(a.card.mastery!==b.card.mastery)return a.card.mastery-b.card.mastery;
+    if(a.card.ease!==b.card.ease)return a.card.ease-b.card.ease;
+    return Math.random()-0.5;
+  });
+  // берём из топ-5 трудных случайного, чтобы чередовать простые/сложные и не подряд
+  const top=sorted.slice(0,Math.min(5,sorted.length));
+  return top[Math.floor(Math.random()*top.length)];
+}
+function upd(card,ok){
+  card.reps++;
+  if(ok){card.ease=Math.min(3,card.ease+0.1);card.interval=card.interval===0?2:Math.round(card.interval*card.ease);card.mastery=Math.min(5,card.mastery+1);}
+  else{card.ease=Math.max(1.3,card.ease-0.25);card.interval=1;card.mastery=Math.max(0,card.mastery-1);}
+  card.due=step+card.interval;
+}
+function groupMastery(g){ // среднее по всем уровням группы
+  let s=0,n=0;
+  for(let l=1;l<=4;l++)poolFor(g,l).forEach(p=>{s+=p.card.mastery;n++;});
+  return {pct:Math.round((s/(n*5))*100)};
+}
+function levelMastery(g,l){let s=0,n=0;poolFor(g,l).forEach(p=>{s+=p.card.mastery;n++;});return Math.round((s/(n*5))*100);}
+function bothUnlocked(){return groupMastery("A").pct>=UNLOCK_PCT && groupMastery("B").pct>=UNLOCK_PCT;}
+
+// ============ РЕНДЕР ============
+const el=id=>document.getElementById(id);
+function distractors(verb){ // 3 неверных перевода того же региона
+  const others=ALL.filter(v=>v[3]!==verb[3]);
+  const picks=[];
+  while(picks.length<3){const c=others[Math.floor(Math.random()*others.length)][3];
+    if(!picks.includes(c)&&c!==verb[3])picks.push(c);}
+  return picks;
+}
+function render(){
+  syncChips();
+  const L=LEVELS[level];
+  el("promptLabel").textContent=L.promptLabel;
+  current=pick();
+  const v=current.verb;
+  el("prompt").textContent=L.getPrompt(v);
+  el("promptSub").textContent=L.getSub(v);
+  el("feedback").textContent="";el("feedback").className="feedback";
+  el("answer").value="";answered=false;
+  el("checkBtn").classList.remove("hidden");
+  el("nextBtn").classList.add("hidden");
+  stars(current.card.mastery);
+  updStats();
+
+  if(L.input==="choice"){
+    el("typeMode").classList.add("hidden");
+    el("choiceMode").classList.remove("hidden");
+    el("checkBtn").classList.add("hidden"); // выбор сразу проверяется
+    const opts=[v[3],...distractors(v)].sort(()=>Math.random()-0.5);
+    const box=el("choices");box.innerHTML="";
+    opts.forEach(o=>{const b=document.createElement("div");b.className="choice";b.textContent=o;
+      b.onclick=()=>choiceAnswer(b,o);box.appendChild(b);});
+    el("hint").textContent="";
+  }else{
+    el("typeMode").classList.remove("hidden");
+    el("choiceMode").classList.add("hidden");
+    el("checkBtn").classList.remove("hidden");
+    el("hint").textContent=(L.lang==="en")?"Переключите клавиатуру на английский.":"";
+    setTimeout(()=>el("answer").focus(),80);
+  }
+}
+function stars(m){el("stars").textContent="★".repeat(m)+"☆".repeat(5-m);
+  el("stars").style.color=m>=4?"var(--lime)":m>=2?"var(--amber)":"var(--muted)";}
+
+function choiceAnswer(btn,chosen){
+  if(answered)return;answered=true;
+  const ok=chosen===current.verb[3];
+  upd(current.card,ok);step++;state.answers++;save();
+  document.querySelectorAll(".choice").forEach(c=>{
+    if(c.textContent===current.verb[3])c.classList.add("correct");
+    else if(c===btn&&!ok)c.classList.add("wrong");
+  });
+  stars(current.card.mastery);
+  el("nextBtn").classList.remove("hidden");updStats();
+}
+function doCheck(){
+  if(answered)return;
+  const inp=el("answer").value;if(!inp.trim())return;
+  const ok=check(inp,current.verb,level);answered=true;
+  upd(current.card,ok);step++;state.answers++;save();
+  const fb=el("feedback");
+  if(ok){fb.textContent="✓ Верно!";fb.className="feedback ok";}
+  else{fb.className="feedback no";fb.innerHTML="✗ Правильно:<div class='correct-answer'>"+LEVELS[level].getAnswer(current.verb)+"</div>";}
+  stars(current.card.mastery);
+  el("checkBtn").classList.add("hidden");
+  el("nextBtn").classList.remove("hidden");updStats();
+}
+function updStats(){
+  const gm=groupMastery(group).pct;
+  el("stats").innerHTML="Группа "+group+": "+gm+"%<br>Ответов: "+state.answers;
+  el("progress").style.width=gm+"%";
+}
+function syncChips(){
+  document.querySelectorAll("#groupRow .chip").forEach(c=>{
+    c.classList.toggle("active",c.dataset.group===group);
+  });
+  document.querySelectorAll("#levelRow .chip").forEach(c=>{
+    c.classList.toggle("active",+c.dataset.lvl===level);
+  });
+  el("mixChip").classList.toggle("locked",!bothUnlocked());
+}
+
+// ============ ПЕРЕКЛЮЧЕНИЯ ============
+el("groupRow").querySelectorAll(".chip").forEach(c=>{
+  c.onclick=()=>{
+    if(c.dataset.group==="MIX"){ if(bothUnlocked())openTimed(); return; }
+    group=c.dataset.group; level=1; save();
+    showGame(); render();
+  };
+});
+el("levelRow").querySelectorAll(".chip").forEach(c=>{
+  c.onclick=()=>{level=+c.dataset.lvl;save();render();};
+});
+el("checkBtn").onclick=doCheck;
+el("nextBtn").onclick=render;
+el("answer").addEventListener("keydown",e=>{if(e.key==="Enter"){answered?render():doCheck();}});
+el("resetBtn").onclick=()=>{if(confirm("Сбросить весь прогресс?")){state=fresh();group="A";level=1;step=0;save();showGame();render();}};
+
+// ============ ФИНАЛ НА ВРЕМЯ ============
+let timedTimer=null,timedLeft=60,timedScore=0,timedCurrent=null;
+function showGame(){el("game").classList.remove("hidden");
+  ["timedIntro","timedGame","timedDone"].forEach(id=>el(id).classList.add("hidden"));
+  el("levelRow").classList.remove("hidden");}
+function openTimed(){
+  el("game").classList.add("hidden");el("levelRow").classList.add("hidden");
+  el("timedGame").classList.add("hidden");el("timedDone").classList.add("hidden");
+  el("timedIntro").classList.remove("hidden");
+  el("recordHint").textContent=state.bestTimed?("Твой рекорд: "+state.bestTimed):"";
+  document.querySelectorAll("#groupRow .chip").forEach(c=>c.classList.toggle("active",c.dataset.group==="MIX"));
+}
+function nextTimed(){
+  timedCurrent=ALL[Math.floor(Math.random()*ALL.length)];
+  el("tPrompt").textContent=timedCurrent[3];
+  el("tAnswer").value="";el("tAnswer").focus();
+}
+el("startTimedBtn").onclick=()=>{
+  el("timedIntro").classList.add("hidden");el("timedGame").classList.remove("hidden");
+  timedLeft=60;timedScore=0;el("tScore").textContent="0";el("timer").textContent="60";el("timer").classList.remove("low");
+  nextTimed();
+  timedTimer=setInterval(()=>{
+    timedLeft--;el("timer").textContent=timedLeft;
+    if(timedLeft<=10)el("timer").classList.add("low");
+    if(timedLeft<=0)endTimed();
+  },1000);
+};
+el("tAnswer").addEventListener("keydown",e=>{
+  if(e.key==="Enter"){
+    const inp=norm(el("tAnswer").value);
+    if(inp===norm(timedCurrent[0])){timedScore++;el("tScore").textContent=timedScore;}
+    nextTimed();
+  }
+});
+function endTimed(){
+  clearInterval(timedTimer);
+  el("timedGame").classList.add("hidden");el("timedDone").classList.remove("hidden");
+  el("finalScore").textContent=timedScore;
+  const rec=state.bestTimed||0;
+  if(timedScore>rec){state.bestTimed=timedScore;save();el("recordMsg").innerHTML="<span style='color:var(--lime)'>🎉 Новый рекорд!</span>";}
+  else el("recordMsg").textContent="Рекорд: "+rec;
+}
+el("againBtn").onclick=()=>{el("timedDone").classList.add("hidden");el("startTimedBtn").click&&openTimed();el("timedIntro").classList.remove("hidden");};
+el("backBtn").onclick=()=>{group="A";level=1;save();showGame();render();};
+
+// старт
+showGame();render();
+</script>
+</body>
+</html>
