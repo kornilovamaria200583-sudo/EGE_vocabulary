@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Тренажёр лексики ЕГЭ</title>
+<style>
+  :root{--bg:#1B2A4A;--card:#22345C;--card2:#2C4270;--teal:#1F6F78;--cyan:#3FC1C9;
+    --amber:#F5A623;--red:#E5484D;--lime:#7BE0AD;--sand:#EDE3D2;--ink:#0E1830;--muted:#9DB0D0;}
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;padding:0}
+  body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;
+    background:var(--bg);color:var(--sand);min-height:100vh;display:flex;flex-direction:column;
+    align-items:center;padding:16px;user-select:none;}
+  .wrap{width:100%;max-width:480px}
+  header{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+  h1{font-size:16px;margin:0;font-weight:600;color:var(--cyan)}
+  .backbtn{font-size:13px;color:var(--muted);cursor:pointer;background:none;border:none;text-decoration:underline}
+  .stats{font-size:12px;color:var(--muted);text-align:right;line-height:1.4}
+  .progress-outer{height:8px;background:var(--ink);border-radius:6px;overflow:hidden;margin:8px 0 14px}
+  .progress-inner{height:100%;width:0%;background:var(--lime);transition:width .4s}
+  .row{display:flex;gap:6px;margin-bottom:12px}
+  .chip{flex:1;text-align:center;font-size:13px;padding:9px 4px;border-radius:10px;
+    background:transparent;border:2px solid var(--card2);color:var(--muted);cursor:pointer;font-weight:600}
+  .chip.active{background:var(--card2);color:#fff;border-color:var(--cyan)}
+  .lvldesc{font-size:12px;color:var(--muted);text-align:center;margin-bottom:12px;min-height:16px}
+  .card{background:var(--card);border-radius:18px;padding:24px 20px;text-align:center;
+    box-shadow:0 6px 20px rgba(0,0,0,.25)}
+  .prompt-label{font-size:12px;color:var(--muted);margin-bottom:8px}
+  .sentence{font-size:20px;font-weight:500;color:#fff;margin:6px 0 18px;line-height:1.5}
+  .sentence .gap,.collo .gap{color:var(--amber);font-weight:700}
+  .collo{font-size:26px;font-weight:700;color:#fff;margin:6px 0 4px}
+  .translation{font-size:15px;color:var(--cyan);margin-bottom:16px;min-height:18px}
+  input[type=text]{width:100%;font-size:21px;text-align:center;padding:13px 10px;
+    border:2px solid var(--card2);border-radius:12px;background:var(--ink);color:#fff;outline:none;margin-bottom:12px;}
+  input[type=text]:focus{border-color:var(--cyan)}
+  .btn{width:100%;font-size:17px;font-weight:600;padding:14px;border:none;border-radius:12px;
+    cursor:pointer;margin-bottom:8px;color:#fff;background:var(--teal)}
+  .btn.amber{background:var(--amber);color:var(--ink)}
+  .btn:active{transform:scale(.98)}
+  .btn.secondary{background:transparent;border:2px solid var(--card2);color:var(--muted);font-size:14px;padding:10px}
+  .choices{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}
+  .choice{font-size:19px;padding:16px 8px;border-radius:12px;background:var(--card2);color:#fff;
+    cursor:pointer;border:2px solid transparent;font-weight:700}
+  .choice:active{transform:scale(.97)}
+  .choice.correct{background:var(--lime);color:var(--ink);border-color:var(--lime)}
+  .choice.wrong{background:var(--red);color:#fff;border-color:var(--red)}
+  .feedback{min-height:48px;margin:4px 0;font-size:15px;font-weight:600}
+  .feedback.ok{color:var(--lime)}.feedback.no{color:var(--red)}
+  .correct-answer{font-size:19px;color:#fff;font-weight:700;margin-top:2px}
+  .full-collo{font-size:14px;color:var(--cyan);margin-top:6px}
+  .stars{font-size:14px;letter-spacing:2px;margin-top:8px;min-height:18px}
+  .hidden{display:none}
+  .hint{font-size:12px;color:var(--muted);margin-top:8px;line-height:1.5;text-align:center}
+  footer{margin-top:18px;font-size:12px;color:var(--muted);text-align:center;line-height:1.6}
+  .reset{color:var(--muted);text-decoration:underline;cursor:pointer;font-size:12px}
+  /* меню */
+  .menu-title{font-size:22px;font-weight:700;color:#fff;text-align:center;margin:10px 0 6px}
+  .menu-sub{font-size:13px;color:var(--muted);text-align:center;margin-bottom:20px}
+  .task-card{background:var(--card);border-radius:16px;padding:18px 18px;margin-bottom:12px;cursor:pointer;
+    border:2px solid transparent;display:flex;justify-content:space-between;align-items:center}
+  .task-card:active{transform:scale(.99)}
+  .task-card .t-name{font-size:16px;font-weight:600;color:#fff}
+  .task-card .t-desc{font-size:12px;color:var(--muted);margin-top:3px}
+  .task-card .t-pct{font-size:15px;font-weight:700;color:var(--lime)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <!-- ЭКРАН МЕНЮ -->
+  <div id="menu">
+    <div class="menu-title">Тренажёр лексики</div>
+    <div class="menu-sub">Подготовка к ЕГЭ · B2+</div>
+    <div id="taskList"></div>
+    <footer>Прогресс сохраняется на этом устройстве.<br>
+      <span class="reset" id="resetAll">Сбросить весь прогресс</span></footer>
+  </div>
+
+  <!-- ЭКРАН ИГРЫ -->
+  <div id="play" class="hidden">
+    <header>
+      <button class="backbtn" id="backBtn">← Задания</button>
+      <div class="stats" id="stats">—</div>
+    </header>
+    <div class="progress-outer"><div class="progress-inner" id="progress"></div></div>
+    <div class="row" id="levelRow"></div>
+    <div class="lvldesc" id="lvldesc"></div>
+
+    <div class="card">
+      <div class="prompt-label" id="promptLabel">—</div>
+      <div id="sentenceWrap" class="hidden"><div class="sentence" id="sentence"></div></div>
+      <div id="colloWrap" class="hidden"><div class="collo" id="collo"></div></div>
+      <div class="translation" id="translation"></div>
+
+      <div id="typeMode"><input type="text" id="answer" autocomplete="off" autocorrect="off"
+        autocapitalize="off" spellcheck="false" placeholder="ваш ответ"></div>
+      <div id="choiceMode" class="hidden"><div class="choices" id="choices"></div></div>
+
+      <div class="feedback" id="feedback"></div>
+      <button class="btn amber" id="checkBtn">Проверить</button>
+      <button class="btn secondary hidden" id="nextBtn">Дальше →</button>
+      <div class="stars" id="stars"></div>
+    </div>
+    <div class="hint" id="hint"></div>
+  </div>
+</div>
+
+<script>
+// ==================== ЗАДАНИЯ ====================
+// Расширяемая структура: чтобы добавить новое задание — добавить объект в TASKS.
+// Каждое задание описывает свои уровни и данные.
+
+// ---- ЗАДАНИЕ №2: предлоги (in/on) ----
+const TASK2={
+  id:"prep",
+  name:"№2 · Предлоги (in / on)",
+  desc:"in charge of, on top of…",
+  items:[
+    {prep:"in", expr:"in somebody's shoes", collo:"___ somebody's shoes", ru:"на чьём-то месте",
+     sentence:"Before you criticise her decision, try to put yourself ___ her shoes and imagine the pressure she was under.",
+     full:"in somebody's shoes", fullAccepted:["in somebodys shoes","in sbs shoes","in someones shoes"]},
+    {prep:"on", expr:"on top of", collo:"___ top of", ru:"в дополнение к; контролировать",
+     sentence:"___ top of working full-time, she somehow manages to study for a law degree in the evenings.",
+     full:"on top of", fullAccepted:[]},
+    {prep:"in", expr:"in search of", collo:"___ search of", ru:"в поисках",
+     sentence:"The explorers spent months travelling through the jungle ___ search of the lost temple.",
+     full:"in search of", fullAccepted:[]},
+    {prep:"on", expr:"on the safe side", collo:"___ the safe side", ru:"на всякий случай",
+     sentence:"The forecast said it would be sunny, but I took an umbrella just to be ___ the safe side.",
+     full:"on the safe side", fullAccepted:[]},
+    {prep:"in", expr:"in charge of", collo:"___ charge of", ru:"ответственный за",
+     sentence:"As the eldest, she was left ___ charge of her younger siblings while their parents were away.",
+     full:"in charge of", fullAccepted:[]},
+    {prep:"in", expr:"in trouble with", collo:"___ trouble with", ru:"в неприятностях с",
+     sentence:"He got ___ trouble with the police after being caught driving without a licence.",
+     full:"in trouble with", fullAccepted:[]}
+  ],
+  levels:{
+    1:{desc:"Предлог · без контекста",label:"Впишите предлог (in / on):",mode:"type",show:"collo",check:"prep"},
+    2:{desc:"Предлог в предложении · ЕГЭ",label:"Впишите предлог (in / on):",mode:"type",show:"sentence",check:"prep"},
+    3:{desc:"Всё выражение · по смыслу",label:"Впишите всё выражение:",mode:"type",show:"translation",check:"full"}
+  }
+};
+
+// ---- ЗАДАНИЕ №3: партитивы ----
+const TASK3={
+  id:"part",
+  name:"№3 · Собирательные слова",
+  desc:"a bunch of, a swarm of…",
+  box:["bar","bunch","can","clap","flash","flock","pair","pint","set","sheet","swarm","tube"],
+  items:[
+    {word:"pair", noun:"pyjamas"},{word:"flash", noun:"lightning"},
+    {word:"pint", noun:"beer", accepted:["pint","can"]},{word:"set", noun:"traffic lights"},
+    {word:"bunch", noun:"flowers"},{word:"sheet", noun:"paper"},
+    {word:"bar", noun:"soap"},{word:"pair", noun:"sunglasses"},
+    {word:"flock", noun:"birds"},{word:"tube", noun:"toothpaste"},
+    {word:"pair", noun:"scissors"},{word:"flock", noun:"sheep"},
+    {word:"set", noun:"rules"},{word:"clap", noun:"thunder"},{word:"swarm", noun:"bees"}
+  ],
+  levels:{
+    1:{desc:"Выбор слова · узнавание",label:"Выберите слово:",mode:"choice",show:"collo_noun"},
+    2:{desc:"Впишите слово",label:"Впишите слово:",mode:"type",show:"collo_noun",check:"word"},
+    3:{desc:"Обратно: с чем слово?",label:"Назовите существительное:",mode:"type",show:"word",check:"noun"}
+  }
+};
+
+const TASKS=[TASK2,TASK3];
+
+// ==================== ХРАНЕНИЕ ====================
+const KEY="ege_lexis_trainer_v1";
+let store=loadStore();
+let task=null, level=1, step=0, current=null, answered=false;
+
+function loadStore(){try{const s=JSON.parse(localStorage.getItem(KEY));if(s&&s.tasks)return s;}catch(e){}return {tasks:{}};}
+function saveStore(){try{localStorage.setItem(KEY,JSON.stringify(store));}catch(e){}}
+function taskState(t){
+  if(!store.tasks[t.id]){
+    const cards={};
+    Object.keys(t.levels).forEach(l=>t.items.forEach((it,i)=>cards[l+"_"+i]={ease:2.5,interval:0,due:0,reps:0,mastery:0}));
+    store.tasks[t.id]={cards,step:0,answers:0,level:1};
+    saveStore();
+  }
+  return store.tasks[t.id];
+}
+function norm(s){return s.toLowerCase().trim().replace(/\s+/g," ").replace(/[.,;!?"']/g,"");}
+
+// ==================== SM-2 ====================
+function pick(){
+  const ts=taskState(task);
+  const pool=task.items.map((it,i)=>({i,it,card:ts.cards[level+"_"+i]}));
+  const due=pool.filter(p=>p.card.due<=ts.step);
+  const base=due.length?due:pool;
+  const sorted=base.slice().sort((a,b)=>{
+    if(a.card.mastery!==b.card.mastery)return a.card.mastery-b.card.mastery;
+    if(a.card.ease!==b.card.ease)return a.card.ease-b.card.ease;
+    return Math.random()-0.5;});
+  const top=sorted.slice(0,Math.min(5,sorted.length));
+  return top[Math.floor(Math.random()*top.length)];
+}
+function upd(card,ok){card.reps++;
+  if(ok){card.ease=Math.min(3,card.ease+0.1);card.interval=card.interval===0?2:Math.round(card.interval*card.ease);card.mastery=Math.min(5,card.mastery+1);}
+  else{card.ease=Math.max(1.3,card.ease-0.25);card.interval=1;card.mastery=Math.max(0,card.mastery-1);}
+  card.due=taskState(task).step+card.interval;}
+function levelMastery(t,l){const ts=taskState(t);let s=0,n=0;t.items.forEach((it,i)=>{s+=ts.cards[l+"_"+i].mastery;n++;});return Math.round((s/(n*5))*100);}
+function taskMastery(t){let tot=0,c=0;Object.keys(t.levels).forEach(l=>{tot+=levelMastery(t,+l);c++;});return Math.round(tot/c);}
+
+// ==================== ПРОВЕРКА ====================
+function checkAns(input,it,lvl){
+  const ni=norm(input);
+  const L=task.levels[lvl];
+  if(L.check==="prep")return ni===it.prep;
+  if(L.check==="full"){
+    const variants=[it.full,...(it.fullAccepted||[])];
+    return variants.map(norm).includes(ni);
+  }
+  if(L.check==="word"){const acc=it.accepted||[it.word];return acc.map(norm).includes(ni);}
+  if(L.check==="noun"){
+    // обратный: принять ЛЮБОЕ существительное, которое сочетается с этим словом
+    const w=it.word;
+    const valid=task.items.filter(x=>x.word===w).map(x=>norm(x.noun));
+    // единственное/множественное упрощение: точное совпадение
+    return valid.includes(ni);
+  }
+}
+function correctText(it,lvl){
+  const L=task.levels[lvl];
+  if(L.check==="prep")return it.prep;
+  if(L.check==="full")return it.full;
+  if(L.check==="word")return (it.accepted?it.accepted.join(" / "):it.word);
+  if(L.check==="noun"){const w=it.word;return task.items.filter(x=>x.word===w).map(x=>x.noun).join(" / ");}
+}
+
+// ==================== РЕНДЕР ====================
+const el=id=>document.getElementById(id);
+function gapHtml(t){return t.replace("___","<span class='gap'>___</span>");}
+
+function renderMenu(){
+  el("menu").classList.remove("hidden");el("play").classList.add("hidden");
+  const list=el("taskList");list.innerHTML="";
+  TASKS.forEach(t=>{
+    const pct=taskMastery(t);
+    const d=document.createElement("div");d.className="task-card";
+    d.innerHTML="<div><div class='t-name'>"+t.name+"</div><div class='t-desc'>"+t.desc+"</div></div><div class='t-pct'>"+pct+"%</div>";
+    d.onclick=()=>openTask(t);
+    list.appendChild(d);
+  });
+}
+function openTask(t){
+  task=t; const ts=taskState(t); level=ts.level||1;
+  el("menu").classList.add("hidden");el("play").classList.remove("hidden");
+  // построить кнопки уровней
+  const lr=el("levelRow");lr.innerHTML="";
+  Object.keys(t.levels).forEach(l=>{
+    const c=document.createElement("div");c.className="chip"+(+l===level?" active":"");
+    c.textContent=l;c.dataset.lvl=l;c.onclick=()=>{level=+l;ts.level=level;saveStore();render();};
+    lr.appendChild(c);
+  });
+  render();
+}
+function render(){
+  const ts=taskState(task);
+  document.querySelectorAll("#levelRow .chip").forEach(c=>c.classList.toggle("active",+c.dataset.lvl===level));
+  const L=task.levels[level];
+  el("lvldesc").textContent=L.desc;el("promptLabel").textContent=L.label;
+  current=pick();const it=current.it;
+
+  el("sentenceWrap").classList.add("hidden");el("colloWrap").classList.add("hidden");el("translation").textContent="";
+  if(L.show==="sentence"){el("sentenceWrap").classList.remove("hidden");el("sentence").innerHTML=gapHtml(it.sentence);}
+  else if(L.show==="collo"){el("colloWrap").classList.remove("hidden");el("collo").innerHTML=gapHtml(it.collo);el("translation").textContent=it.ru||"";}
+  else if(L.show==="collo_noun"){el("colloWrap").classList.remove("hidden");el("collo").innerHTML="a <span class='gap'>___</span> of "+it.noun;}
+  else if(L.show==="translation"){el("translation").textContent=it.ru;}
+  else if(L.show==="word"){el("colloWrap").classList.remove("hidden");el("collo").textContent=it.word;el("translation").textContent="";}
+
+  el("feedback").textContent="";el("feedback").className="feedback";
+  el("answer").value="";answered=false;
+  el("checkBtn").classList.remove("hidden");el("nextBtn").classList.add("hidden");
+  stars(current.card.mastery);updStats();
+
+  if(L.mode==="choice"){
+    el("typeMode").classList.add("hidden");el("choiceMode").classList.remove("hidden");el("checkBtn").classList.add("hidden");
+    // варианты: правильное слово + 3 случайных из box
+    const correct=it.word;
+    const others=task.box.filter(w=>w!==correct);
+    const opts=[correct];
+    while(opts.length<4&&others.length){const r=others.splice(Math.floor(Math.random()*others.length),1)[0];opts.push(r);}
+    opts.sort(()=>Math.random()-0.5);
+    const box=el("choices");box.innerHTML="";
+    opts.forEach(o=>{const b=document.createElement("div");b.className="choice";b.textContent=o;b.onclick=()=>choiceAns(b,o);box.appendChild(b);});
+    el("hint").textContent="";
+  }else{
+    el("typeMode").classList.remove("hidden");el("choiceMode").classList.add("hidden");el("checkBtn").classList.remove("hidden");
+    el("hint").textContent = L.check==="prep"?"Только in или on.":
+      L.check==="noun"?"С каким существительным идёт это слово?":"Переключите клавиатуру на английский.";
+    setTimeout(()=>el("answer").focus(),80);
+  }
+}
+function stars(m){el("stars").textContent="★".repeat(m)+"☆".repeat(5-m);
+  el("stars").style.color=m>=4?"var(--lime)":m>=2?"var(--amber)":"var(--muted)";}
+
+function afterAnswer(ok){
+  upd(current.card,ok);const ts=taskState(task);ts.step++;ts.answers++;step=ts.step;saveStore();
+  stars(current.card.mastery);el("nextBtn").classList.remove("hidden");updStats();
+}
+function infoLine(it){
+  if(task.id==="prep")return "<div class='full-collo'>"+it.full+" — "+it.ru+"</div>";
+  if(task.id==="part")return "<div class='full-collo'>a "+(it.accepted?it.accepted.join("/"):it.word)+" of "+it.noun+"</div>";
+  return "";
+}
+function choiceAns(btn,chosen){
+  if(answered)return;answered=true;
+  const acc=current.it.accepted||[current.it.word];
+  const ok=acc.includes(chosen);
+  document.querySelectorAll(".choice").forEach(c=>{
+    if(acc.includes(c.textContent))c.classList.add("correct");
+    else if(c===btn&&!ok)c.classList.add("wrong");});
+  el("feedback").className="feedback "+(ok?"ok":"no");
+  el("feedback").innerHTML=(ok?"✓ Верно! ":"✗ ")+infoLine(current.it);
+  el("checkBtn").classList.add("hidden");
+  afterAnswer(ok);
+}
+function doCheck(){
+  if(answered)return;const inp=el("answer").value;if(!inp.trim())return;
+  const ok=checkAns(inp,current.it,level);answered=true;
+  const fb=el("feedback");
+  if(ok){fb.className="feedback ok";fb.innerHTML="✓ Верно! "+infoLine(current.it);}
+  else{fb.className="feedback no";fb.innerHTML="✗ Правильно: <span class='correct-answer'>"+correctText(current.it,level)+"</span>"+infoLine(current.it);}
+  el("checkBtn").classList.add("hidden");
+  afterAnswer(ok);
+}
+function updStats(){const lm=levelMastery(task,level);const ts=taskState(task);
+  el("stats").innerHTML="Уровень "+level+": "+lm+"%<br>Ответов: "+ts.answers;
+  el("progress").style.width=lm+"%";}
+
+el("checkBtn").onclick=doCheck;
+el("nextBtn").onclick=render;
+el("answer").addEventListener("keydown",e=>{if(e.key==="Enter"){answered?render():doCheck();}});
+el("backBtn").onclick=()=>{renderMenu();};
+el("resetAll").onclick=()=>{if(confirm("Сбросить весь прогресс по всем заданиям?")){store={tasks:{}};saveStore();renderMenu();}};
+
+renderMenu();
+</script>
+</body>
+</html>

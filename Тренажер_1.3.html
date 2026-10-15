@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Тренажёр: словосочетания (go/come/reach/get)</title>
+<style>
+  :root{--bg:#1B2A4A;--card:#22345C;--card2:#2C4270;--teal:#1F6F78;--cyan:#3FC1C9;
+    --amber:#F5A623;--red:#E5484D;--lime:#7BE0AD;--sand:#EDE3D2;--ink:#0E1830;--muted:#9DB0D0;}
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;padding:0}
+  body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;
+    background:var(--bg);color:var(--sand);min-height:100vh;display:flex;flex-direction:column;
+    align-items:center;padding:16px;user-select:none;}
+  .wrap{width:100%;max-width:480px}
+  header{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+  h1{font-size:16px;margin:0;font-weight:600;color:var(--cyan)}
+  .stats{font-size:12px;color:var(--muted);text-align:right;line-height:1.4}
+  .progress-outer{height:8px;background:var(--ink);border-radius:6px;overflow:hidden;margin:8px 0 14px}
+  .progress-inner{height:100%;width:0%;background:var(--lime);transition:width .4s}
+  .row{display:flex;gap:6px;margin-bottom:12px}
+  .chip{flex:1;text-align:center;font-size:13px;padding:9px 4px;border-radius:10px;
+    background:transparent;border:2px solid var(--card2);color:var(--muted);cursor:pointer;font-weight:600}
+  .chip.active{background:var(--card2);color:#fff;border-color:var(--cyan)}
+  .lvldesc{font-size:12px;color:var(--muted);text-align:center;margin-bottom:12px;min-height:16px}
+  .card{background:var(--card);border-radius:18px;padding:24px 20px;text-align:center;
+    box-shadow:0 6px 20px rgba(0,0,0,.25)}
+  .prompt-label{font-size:12px;color:var(--muted);margin-bottom:8px}
+  .sentence{font-size:20px;font-weight:500;color:#fff;margin:6px 0 18px;line-height:1.5}
+  .sentence .gap{color:var(--amber);font-weight:700}
+  .collo{font-size:26px;font-weight:700;color:#fff;margin:6px 0 4px}
+  .collo .gap{color:var(--amber)}
+  .translation{font-size:14px;color:var(--cyan);margin-bottom:16px;min-height:18px}
+  input[type=text]{width:100%;font-size:21px;text-align:center;padding:13px 10px;
+    border:2px solid var(--card2);border-radius:12px;background:var(--ink);color:#fff;
+    outline:none;margin-bottom:12px;}
+  input[type=text]:focus{border-color:var(--cyan)}
+  .btn{width:100%;font-size:17px;font-weight:600;padding:14px;border:none;border-radius:12px;
+    cursor:pointer;margin-bottom:8px;color:#fff;background:var(--teal)}
+  .btn.amber{background:var(--amber);color:var(--ink)}
+  .btn:active{transform:scale(.98)}
+  .btn.secondary{background:transparent;border:2px solid var(--card2);color:var(--muted);font-size:14px;padding:10px}
+  .choices{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}
+  .choice{font-size:20px;padding:16px 8px;border-radius:12px;background:var(--card2);color:#fff;
+    cursor:pointer;border:2px solid transparent;font-weight:700}
+  .choice:active{transform:scale(.97)}
+  .choice.correct{background:var(--lime);color:var(--ink);border-color:var(--lime)}
+  .choice.wrong{background:var(--red);color:#fff;border-color:var(--red)}
+  .feedback{min-height:48px;margin:4px 0;font-size:15px;font-weight:600}
+  .feedback.ok{color:var(--lime)}
+  .feedback.no{color:var(--red)}
+  .correct-answer{font-size:19px;color:#fff;font-weight:700;margin-top:2px}
+  .full-collo{font-size:14px;color:var(--cyan);margin-top:6px}
+  .stars{font-size:14px;letter-spacing:2px;margin-top:8px;min-height:18px}
+  .hidden{display:none}
+  .hint{font-size:12px;color:var(--muted);margin-top:8px;line-height:1.5;text-align:center}
+  footer{margin-top:18px;font-size:12px;color:var(--muted);text-align:center;line-height:1.6}
+  .reset{color:var(--muted);text-decoration:underline;cursor:pointer;font-size:12px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Словосочетания: go / come / reach / get</h1>
+    <div class="stats" id="stats">—</div>
+  </header>
+  <div class="progress-outer"><div class="progress-inner" id="progress"></div></div>
+
+  <div class="row" id="levelRow">
+    <div class="chip active" data-lvl="1">1</div>
+    <div class="chip" data-lvl="2">2</div>
+    <div class="chip" data-lvl="3">3</div>
+    <div class="chip" data-lvl="4">4</div>
+  </div>
+  <div class="lvldesc" id="lvldesc"></div>
+
+  <div class="card">
+    <div class="prompt-label" id="promptLabel">—</div>
+    <div id="sentenceWrap" class="hidden"><div class="sentence" id="sentence"></div></div>
+    <div id="colloWrap" class="hidden"><div class="collo" id="collo"></div></div>
+    <div class="translation" id="translation"></div>
+
+    <div id="typeMode">
+      <input type="text" id="answer" autocomplete="off" autocorrect="off"
+        autocapitalize="off" spellcheck="false" placeholder="ваш ответ">
+    </div>
+    <div id="choiceMode" class="hidden"><div class="choices" id="choices"></div></div>
+
+    <div class="feedback" id="feedback"></div>
+    <button class="btn amber" id="checkBtn">Проверить</button>
+    <button class="btn secondary hidden" id="nextBtn">Дальше →</button>
+    <div class="stars" id="stars"></div>
+  </div>
+  <div class="hint" id="hint"></div>
+
+  <footer>Прогресс сохраняется на этом устройстве.<br>
+    <span class="reset" id="resetBtn">Сбросить прогресс</span></footer>
+</div>
+
+<script>
+// ============ ДАННЫЕ ============
+// collo: словосочетание с пропуском ___ (базовый глагол)
+// base: правильный глагол в базовой форме (для ур.1,2)
+// baseAccepted: допустимые базовые глаголы (для go/get to sleep)
+// sentence: предложение с пропуском ___ (ур.3)
+// formsAccepted: допустимые формы В КОНТЕКСТЕ предложения (умная проверка)
+// full: полное словосочетание (ур.4)
+// ru: русский смысл (подсказка на ур.4)
+const DATA=[
+ {collo:"___ better", base:"get", sentence:"Although the treatment was painful, the doctor promised she would gradually ___ better over the following weeks.", formsAccepted:["get"], full:"get better", ru:"поправляться, становиться лучше"},
+ {collo:"___ a decision", base:"reach", sentence:"After weeks of heated debate, the committee finally managed to ___ a decision that satisfied everyone.", formsAccepted:["reach"], full:"reach a decision", ru:"прийти к решению"},
+ {collo:"___ to terms with", base:"come", sentence:"It took him years to ___ to terms with the loss of his childhood home.", formsAccepted:["come"], full:"come to terms with", ru:"смириться с"},
+ {collo:"___ into trouble", base:"get", sentence:"If you keep copying answers during the exam, you will ___ into serious trouble with the head teacher.", formsAccepted:["get"], full:"get into trouble", ru:"попасть в неприятности"},
+ {collo:"___ dark", base:"get", sentence:"We should set up the tent quickly before it starts to ___ dark and we can't see a thing.", formsAccepted:["get"], full:"get dark", ru:"темнеть"},
+ {collo:"___ to sleep", base:"go", baseAccepted:["go","get"], sentence:"I was so anxious about the interview that I couldn't ___ to sleep until well past midnight.", formsAccepted:["go","get"], full:"go to sleep", ru:"заснуть"},
+ {collo:"___ rid of", base:"get", sentence:"The new manager was determined to ___ rid of the outdated equipment that kept breaking down.", formsAccepted:["get"], full:"get rid of", ru:"избавиться от"},
+ {collo:"___ ready", base:"get", sentence:"You had better ___ ready quickly — the taxi will be here in ten minutes.", formsAccepted:["get"], full:"get ready", ru:"приготовиться"},
+ {collo:"___ the sack", base:"get", sentence:"If you keep showing up late, you will ___ the sack before the end of the month.", formsAccepted:["get"], full:"get the sack", ru:"быть уволенным"},
+ {collo:"___ in handy", base:"come", sentence:"Don't throw away those old cables — they might ___ in handy one day.", formsAccepted:["come"], full:"come in handy", ru:"пригодиться"},
+ {collo:"___ revenge", base:"get", sentence:"He spent years plotting how to ___ revenge on the rival who had ruined his reputation.", formsAccepted:["get"], full:"get revenge", ru:"отомстить"},
+ {collo:"___ red", base:"go", sentence:"She ___ red with embarrassment when she realised she'd called her teacher \"Mum\".", formsAccepted:["went"], full:"go red", ru:"покраснеть (от смущения)"},
+ {collo:"___ an agreement", base:"reach", sentence:"After months of tense negotiations, the two countries were finally able to ___ an agreement on trade.", formsAccepted:["reach"], full:"reach an agreement", ru:"прийти к соглашению"},
+ {collo:"___ lost", base:"get", sentence:"Without a map or any phone signal, the hikers were terrified they would ___ lost in the forest.", formsAccepted:["get"], full:"get lost", ru:"заблудиться"},
+ {collo:"___ the job", base:"get", sentence:"She was overqualified and confident, so nobody was surprised when she ___ the job.", formsAccepted:["got","has got","got offered"], full:"get the job", ru:"получить работу"},
+ {collo:"___ on sb's nerves", base:"get", sentence:"My neighbour's constant drilling is really starting to ___ on my nerves.", formsAccepted:["get"], full:"get on someone's nerves", ru:"действовать на нервы"},
+ {collo:"___ off sb's back", base:"get", sentence:"I wish my parents would ___ off my back about choosing a career and let me decide for myself.", formsAccepted:["get"], full:"get off someone's back", ru:"отстать, перестать доставать"},
+ {collo:"___ down to business", base:"get", sentence:"Enough small talk — let's ___ down to business and go through the quarterly figures.", formsAccepted:["get"], full:"get down to business", ru:"перейти к делу"},
+ {collo:"___ over the top", base:"go", sentence:"Decorating the office for the party is fine, but hiring a live band might be ___ over the top.", formsAccepted:["going"], full:"go over the top", ru:"переборщить, перегнуть палку"},
+ {collo:"___ even with", base:"get", sentence:"Instead of trying to ___ even with those who wronged you, it's healthier to simply move on.", formsAccepted:["get"], full:"get even with", ru:"поквитаться, отомстить"}
+];
+const VERBS=["go","come","reach","get"];
+
+// ============ УРОВНИ ============
+const LEVELS={
+ 1:{desc:"Выбор глагола · узнавание",promptLabel:"Какой глагол? Выберите:",mode:"choice",show:"collo"},
+ 2:{desc:"Впишите глагол · без контекста",promptLabel:"Впишите глагол (базовая форма):",mode:"type",show:"collo",check:"base"},
+ 3:{desc:"Глагол в предложении · уровень ЕГЭ",promptLabel:"Впишите глагол в нужной форме:",mode:"type",show:"sentence",check:"forms"},
+ 4:{desc:"Всё словосочетание · по смыслу",promptLabel:"Впишите всё словосочетание:",mode:"type",show:"translation",check:"full"}
+};
+
+// ============ ХРАНЕНИЕ / SM-2 ============
+const KEY="collo_go_come_reach_get_v1";
+let state=load(), level=state.level||1, step=state.step||0, current=null, answered=false;
+function load(){try{const s=JSON.parse(localStorage.getItem(KEY));if(s&&s.cards)return s;}catch(e){}return fresh();}
+function fresh(){const cards={};for(let l=1;l<=4;l++)DATA.forEach((d,i)=>cards[l+"_"+i]={ease:2.5,interval:0,due:0,reps:0,mastery:0});return{cards,level:1,step:0,answers:0};}
+function save(){state.level=level;state.step=step;try{localStorage.setItem(KEY,JSON.stringify(state));}catch(e){}}
+function norm(s){return s.toLowerCase().trim().replace(/\s+/g," ").replace(/[.,;!?"']/g,"");}
+
+function checkAns(input,d,lvl){
+  const ni=norm(input);
+  if(lvl===1){return ni===d.base||(d.baseAccepted&&d.baseAccepted.map(norm).includes(ni));}
+  if(lvl===2){const acc=d.baseAccepted||[d.base];return acc.map(norm).includes(ni);}
+  if(lvl===3){return d.formsAccepted.map(norm).includes(ni);}
+  if(lvl===4){
+    // полное словосочетание: принимаем с sb/someone/somebody, one's вариациями
+    const variants=[d.full, d.full.replace("someone's","sb's"), d.full.replace("someone","sb"),
+      d.collo.replace("___",d.base)];
+    return variants.map(norm).includes(ni)||norm(d.full)===ni;
+  }
+}
+function correctText(d,lvl){
+  if(lvl===1||lvl===2)return (d.baseAccepted?d.baseAccepted.join(" / "):d.base);
+  if(lvl===3)return d.formsAccepted.join(" / ");
+  if(lvl===4)return d.full;
+}
+
+function pick(){
+  const pool=DATA.map((d,i)=>({i,d,card:state.cards[level+"_"+i]}));
+  const due=pool.filter(p=>p.card.due<=step);
+  const base=due.length?due:pool;
+  const sorted=base.slice().sort((a,b)=>{
+    if(a.card.mastery!==b.card.mastery)return a.card.mastery-b.card.mastery;
+    if(a.card.ease!==b.card.ease)return a.card.ease-b.card.ease;
+    return Math.random()-0.5;});
+  const top=sorted.slice(0,Math.min(5,sorted.length));
+  return top[Math.floor(Math.random()*top.length)];
+}
+function upd(card,ok){card.reps++;
+  if(ok){card.ease=Math.min(3,card.ease+0.1);card.interval=card.interval===0?2:Math.round(card.interval*card.ease);card.mastery=Math.min(5,card.mastery+1);}
+  else{card.ease=Math.max(1.3,card.ease-0.25);card.interval=1;card.mastery=Math.max(0,card.mastery-1);}
+  card.due=step+card.interval;}
+function levelMastery(l){let s=0,n=0;DATA.forEach((d,i)=>{s+=state.cards[l+"_"+i].mastery;n++;});return Math.round((s/(n*5))*100);}
+
+const el=id=>document.getElementById(id);
+function gapHtml(text){return text.replace("___","<span class='gap'>___</span>");}
+
+function render(){
+  document.querySelectorAll("#levelRow .chip").forEach(c=>c.classList.toggle("active",+c.dataset.lvl===level));
+  const L=LEVELS[level];
+  el("lvldesc").textContent=L.desc;
+  el("promptLabel").textContent=L.promptLabel;
+  current=pick();
+  const d=current.d;
+  // что показываем
+  el("sentenceWrap").classList.add("hidden");
+  el("colloWrap").classList.add("hidden");
+  el("translation").textContent="";
+  if(L.show==="sentence"){el("sentenceWrap").classList.remove("hidden");el("sentence").innerHTML=gapHtml(d.sentence);}
+  else if(L.show==="collo"){el("colloWrap").classList.remove("hidden");el("collo").innerHTML=gapHtml(d.collo);}
+  else if(L.show==="translation"){el("translation").textContent=d.ru;}
+
+  el("feedback").textContent="";el("feedback").className="feedback";
+  el("answer").value="";answered=false;
+  el("checkBtn").classList.remove("hidden");el("nextBtn").classList.add("hidden");
+  stars(current.card.mastery);updStats();
+
+  if(L.mode==="choice"){
+    el("typeMode").classList.add("hidden");el("choiceMode").classList.remove("hidden");
+    el("checkBtn").classList.add("hidden");
+    const box=el("choices");box.innerHTML="";
+    VERBS.slice().sort(()=>Math.random()-0.5).forEach(v=>{
+      const b=document.createElement("div");b.className="choice";b.textContent=v;
+      b.onclick=()=>choiceAns(b,v);box.appendChild(b);});
+    el("hint").textContent="";
+  }else{
+    el("typeMode").classList.remove("hidden");el("choiceMode").classList.add("hidden");
+    el("checkBtn").classList.remove("hidden");
+    el("hint").textContent=level===3?"Впишите глагол в форме, которую требует предложение.":
+      level===4?"Впишите всё словосочетание по-английски.":"Переключите клавиатуру на английский.";
+    setTimeout(()=>el("answer").focus(),80);
+  }
+}
+function stars(m){el("stars").textContent="★".repeat(m)+"☆".repeat(5-m);
+  el("stars").style.color=m>=4?"var(--lime)":m>=2?"var(--amber)":"var(--muted)";}
+function choiceAns(btn,chosen){
+  if(answered)return;answered=true;
+  const ok=chosen===current.d.base||(current.d.baseAccepted&&current.d.baseAccepted.includes(chosen));
+  upd(current.card,ok);step++;state.answers++;save();
+  document.querySelectorAll(".choice").forEach(c=>{
+    const cv=c.textContent;
+    if(cv===current.d.base||(current.d.baseAccepted&&current.d.baseAccepted.includes(cv)))c.classList.add("correct");
+    else if(c===btn&&!ok)c.classList.add("wrong");});
+  // показать полное словосочетание для закрепления
+  el("feedback").className="feedback "+(ok?"ok":"no");
+  el("feedback").innerHTML=(ok?"✓ Верно! ":"✗ ")+"<div class='full-collo'>"+current.d.full+" — "+current.d.ru+"</div>";
+  stars(current.card.mastery);el("nextBtn").classList.remove("hidden");updStats();
+}
+function doCheck(){
+  if(answered)return;const inp=el("answer").value;if(!inp.trim())return;
+  const ok=checkAns(inp,current.d,level);answered=true;
+  upd(current.card,ok);step++;state.answers++;save();
+  const fb=el("feedback");
+  if(ok){fb.className="feedback ok";fb.innerHTML="✓ Верно! <div class='full-collo'>"+current.d.full+" — "+current.d.ru+"</div>";}
+  else{fb.className="feedback no";fb.innerHTML="✗ Правильно: <span class='correct-answer'>"+correctText(current.d,level)+"</span><div class='full-collo'>"+current.d.full+" — "+current.d.ru+"</div>";}
+  stars(current.card.mastery);
+  el("checkBtn").classList.add("hidden");el("nextBtn").classList.remove("hidden");updStats();
+}
+function updStats(){const lm=levelMastery(level);
+  el("stats").innerHTML="Уровень "+level+": "+lm+"%<br>Ответов: "+state.answers;
+  el("progress").style.width=lm+"%";}
+
+el("levelRow").querySelectorAll(".chip").forEach(c=>c.onclick=()=>{level=+c.dataset.lvl;save();render();});
+el("checkBtn").onclick=doCheck;
+el("nextBtn").onclick=render;
+el("answer").addEventListener("keydown",e=>{if(e.key==="Enter"){answered?render():doCheck();}});
+el("resetBtn").onclick=()=>{if(confirm("Сбросить весь прогресс?")){state=fresh();level=1;step=0;save();render();}};
+
+render();
+</script>
+</body>
+</html>

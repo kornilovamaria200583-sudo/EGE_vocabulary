@@ -1,0 +1,539 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>Тренажёр лексики ЕГЭ</title>
+<style>
+  :root{
+    --bg:#122A22;--bg2:#0D211A;--panel:#1B3A2E;--panel2:#24503C;
+    --gold:#D8AE4E;--gold-dim:#8F7738;--coral:#E2624F;--sage:#8FD3A6;
+    --paper:#F1EAD6;--ink:#0B140F;--muted:#87A896;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;touch-action:manipulation}
+  html,body{margin:0;padding:0}
+  body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;
+    background:radial-gradient(ellipse at top,var(--bg) 0%,var(--bg2) 100%);
+    color:var(--paper);min-height:100vh;display:flex;flex-direction:column;align-items:center;
+    padding:max(16px,env(safe-area-inset-top)) 16px max(16px,env(safe-area-inset-bottom));
+    user-select:none;}
+  .wrap{width:100%;max-width:480px}
+  header{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:10px}
+  h1{font-size:16px;margin:0;font-weight:700;color:var(--gold);letter-spacing:.3px}
+  .backbtn{font-size:13px;color:var(--muted);cursor:pointer;background:none;border:none;text-decoration:underline;
+    padding:6px 0;white-space:nowrap}
+  .icon-btn{font-size:13px;color:var(--gold);background:var(--panel);border:1px solid var(--gold-dim);
+    border-radius:10px;padding:8px 10px;cursor:pointer;white-space:nowrap;font-weight:600}
+  .stats{font-size:11.5px;color:var(--muted);text-align:right;line-height:1.4;white-space:nowrap}
+  .progress-outer{height:8px;background:var(--bg2);border-radius:6px;overflow:hidden;margin:8px 0 14px;
+    border:1px solid rgba(216,174,78,.15)}
+  .progress-inner{height:100%;width:0%;background:linear-gradient(90deg,var(--gold-dim),var(--gold));transition:width .4s}
+  .row{display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap}
+  .chip{flex:1;min-width:60px;text-align:center;font-size:13px;padding:9px 4px;border-radius:10px;
+    background:transparent;border:2px solid var(--panel2);color:var(--muted);cursor:pointer;font-weight:600}
+  .chip.active{background:var(--panel2);color:#fff;border-color:var(--gold)}
+  .lvldesc{font-size:12px;color:var(--muted);text-align:center;margin-bottom:12px;min-height:16px}
+  .card{position:relative;background:var(--panel);border-radius:16px;padding:26px 20px 22px;text-align:center;
+    box-shadow:0 8px 24px rgba(0,0,0,.35);border-top:3px solid var(--gold);border:1px solid rgba(216,174,78,.18);
+    border-top:3px solid var(--gold)}
+  .prompt-label{font-size:12px;color:var(--muted);margin-bottom:10px;text-transform:uppercase;letter-spacing:.5px}
+  .main-text{font-size:19px;font-weight:500;color:#fff;margin:6px 0 6px;line-height:1.55}
+  .main-text .gap{color:var(--gold);font-weight:800}
+  .sub-text{font-size:14px;color:var(--sage);margin-bottom:16px;min-height:18px;font-style:italic;line-height:1.4}
+  input[type=text]{width:100%;font-size:19px;text-align:center;padding:13px 10px;
+    border:2px solid var(--panel2);border-radius:12px;background:var(--bg2);color:#fff;outline:none;margin-bottom:12px;}
+  input[type=text]:focus{border-color:var(--gold)}
+  .btn{width:100%;font-size:16px;font-weight:700;padding:14px;border:none;border-radius:12px;
+    cursor:pointer;margin-bottom:8px;color:var(--ink);background:var(--gold)}
+  .btn:active{transform:scale(.98)}
+  .btn.secondary{background:transparent;border:2px solid var(--panel2);color:var(--muted);font-size:14px;padding:10px;font-weight:600}
+  .choices{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}
+  .choice{font-size:16px;padding:15px 8px;border-radius:12px;background:var(--panel2);color:#fff;
+    cursor:pointer;border:2px solid transparent;font-weight:700;line-height:1.3}
+  .choice:active{transform:scale(.97)}
+  .choice.correct{background:var(--sage);color:var(--ink);border-color:var(--sage)}
+  .choice.wrong{background:var(--coral);color:#fff;border-color:var(--coral)}
+  .feedback{min-height:44px;margin:4px 0;font-size:15px;font-weight:600}
+  .feedback.ok{color:var(--sage)}.feedback.no{color:var(--coral)}
+  .correct-answer{font-size:18px;color:#fff;font-weight:700}
+  .stars{font-size:14px;letter-spacing:2px;margin-top:8px;min-height:18px}
+  .hidden{display:none!important}
+  .hint{font-size:12px;color:var(--muted);margin-top:10px;line-height:1.5;text-align:center;padding:0 6px}
+  footer{margin-top:18px;font-size:12px;color:var(--muted);text-align:center;line-height:1.6}
+  .reset{color:var(--muted);text-decoration:underline;cursor:pointer;font-size:12px}
+  /* меню */
+  .menu-title{font-size:22px;font-weight:700;color:#fff;text-align:center;margin:10px 0 6px}
+  .menu-sub{font-size:13px;color:var(--muted);text-align:center;margin-bottom:20px}
+  .task-card{background:var(--panel);border-radius:16px;padding:18px 18px;margin-bottom:12px;cursor:pointer;
+    border:1px solid rgba(216,174,78,.18);border-left:3px solid var(--gold);display:flex;justify-content:space-between;align-items:center}
+  .task-card:active{transform:scale(.99)}
+  .task-card .t-name{font-size:15.5px;font-weight:600;color:#fff}
+  .task-card .t-desc{font-size:12px;color:var(--muted);margin-top:3px}
+  .task-card .t-pct{font-size:15px;font-weight:700;color:var(--sage)}
+  /* штамп на верный ответ */
+  .stamp{position:fixed;top:38%;left:50%;transform:translate(-50%,-50%) rotate(-9deg) scale(.5);opacity:0;
+    border:3px solid var(--gold);color:var(--gold);font-weight:800;font-size:20px;letter-spacing:3px;
+    padding:10px 24px;border-radius:10px;pointer-events:none;text-transform:uppercase;
+    background:rgba(13,33,26,.9);z-index:60}
+  .stamp.show{animation:stampIn 1s ease forwards}
+  @keyframes stampIn{
+    0%{opacity:0;transform:translate(-50%,-50%) rotate(-9deg) scale(.4)}
+    18%{opacity:1;transform:translate(-50%,-50%) rotate(-7deg) scale(1.08)}
+    70%{opacity:1;transform:translate(-50%,-50%) rotate(-7deg) scale(1)}
+    100%{opacity:0;transform:translate(-50%,-50%) rotate(-7deg) scale(1)}
+  }
+  /* словарь */
+  .dict-overlay{position:fixed;inset:0;background:rgba(6,14,11,.75);z-index:70;display:flex;
+    align-items:flex-end;justify-content:center}
+  .dict-panel{width:100%;max-width:480px;max-height:78vh;background:var(--panel);border-radius:20px 20px 0 0;
+    padding:18px 18px max(18px,env(safe-area-inset-bottom));overflow-y:auto;border-top:3px solid var(--gold)}
+  .dict-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+  .dict-head h2{font-size:16px;color:var(--gold);margin:0}
+  .dict-close{background:var(--panel2);color:var(--muted);border:none;border-radius:10px;width:30px;height:30px;
+    font-size:16px;cursor:pointer}
+  .dict-group{font-size:11px;color:var(--gold);text-transform:uppercase;letter-spacing:1px;font-weight:700;
+    margin:14px 0 6px}
+  .dict-group:first-child{margin-top:0}
+  .dict-row{padding:8px 0;border-bottom:1px solid rgba(216,174,78,.12);text-align:left}
+  .dict-phrase{display:block;color:#fff;font-weight:700;font-size:14.5px}
+  .dict-def{display:block;color:var(--muted);font-size:12.5px;margin-top:2px;line-height:1.4}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <!-- ЭКРАН МЕНЮ -->
+  <div id="menu">
+    <div class="menu-title">Тренажёр лексики</div>
+    <div class="menu-sub">Подготовка к ЕГЭ · B2+</div>
+    <div id="taskList"></div>
+    <footer>Прогресс сохраняется на этом устройстве.<br>
+      <span class="reset" id="resetAll">Сбросить весь прогресс</span></footer>
+  </div>
+
+  <!-- ЭКРАН ИГРЫ -->
+  <div id="play" class="hidden">
+    <header>
+      <button class="backbtn" id="backBtn">← Задания</button>
+      <button class="icon-btn hidden" id="dictBtn">📖 Dictionary</button>
+      <div class="stats" id="stats">—</div>
+    </header>
+    <div class="progress-outer"><div class="progress-inner" id="progress"></div></div>
+    <div class="row" id="levelRow"></div>
+    <div class="lvldesc" id="lvldesc"></div>
+
+    <div class="card">
+      <div class="prompt-label" id="promptLabel">—</div>
+      <div class="main-text" id="mainText"></div>
+      <div class="sub-text" id="subText"></div>
+
+      <div id="typeMode"><input type="text" id="answer" autocomplete="off" autocorrect="off"
+        autocapitalize="off" spellcheck="false" placeholder="ваш ответ"></div>
+      <div id="choiceMode" class="hidden"><div class="choices" id="choices"></div></div>
+
+      <div class="feedback" id="feedback"></div>
+      <button class="btn" id="checkBtn">Проверить</button>
+      <button class="btn secondary hidden" id="nextBtn">Дальше →</button>
+      <div class="stars" id="stars"></div>
+    </div>
+    <div class="hint" id="hint"></div>
+  </div>
+
+  <div class="stamp" id="stamp">ВЕРНО ✓</div>
+
+  <!-- СЛОВАРЬ -->
+  <div class="dict-overlay hidden" id="dictModal">
+    <div class="dict-panel">
+      <div class="dict-head"><h2>Phrasal verb dictionary</h2><button class="dict-close" id="dictClose">✕</button></div>
+      <div id="dictBody"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ==================== ДАННЫЕ: ФРАЗОВЫЕ ГЛАГОЛЫ ====================
+const PV_ITEMS=[
+  {group:"COME",phrase:"come across",definition:"find something or someone by chance, without looking for it",
+   sentence:"While cleaning out the attic, I came ___ an old photo album I'd completely forgotten about.",blank:"across"},
+  {group:"COME",phrase:"come into",definition:"receive money or property, usually by inheritance",
+   sentence:"When her uncle passed away, she came ___ a small fortune and used it to start her own business.",blank:"into"},
+  {group:"COME",phrase:"come round",definition:"visit someone informally, drop by",
+   sentence:"Why don't you come ___ tonight for dinner? We haven't seen you in ages.",blank:"round"},
+  {group:"COME",phrase:"come up with",definition:"think of an idea, plan or solution and suggest it",
+   sentence:"The team spent hours trying to come ___ with a solution to the budget problem.",blank:"up"},
+  {group:"COME",phrase:"come down with",definition:"become ill with a usually minor illness",
+   sentence:"He came ___ with a bad case of flu and had to stay in bed all week.",blank:"down"},
+  {group:"COME",phrase:"come round / to",definition:"regain consciousness after fainting or being unconscious",
+   sentence:"After fainting on the platform, it took her a few minutes to come ___.",blank:"round",blankAccepted:["to"]},
+
+  {group:"GO",phrase:"go ahead with",definition:"start or proceed with a plan, despite possible objections",
+   sentence:"The council decided to go ___ with the construction project despite local objections.",blank:"ahead"},
+  {group:"GO",phrase:"go on with",definition:"continue doing something",
+   sentence:"Please go ___ with your work; I didn't mean to interrupt you.",blank:"on"},
+  {group:"GO",phrase:"go over",definition:"examine or discuss something in detail, often to check it",
+   sentence:"Let's go ___ the contract one more time before signing.",blank:"over"},
+  {group:"GO",phrase:"go with",definition:"match or suit something, especially in appearance",
+   sentence:"That red scarf really goes ___ your black coat.",blank:"with"},
+  {group:"GO",phrase:"go off",definition:"explode",
+   sentence:"The bomb went ___ just seconds after the area had been evacuated.",blank:"off"},
+  {group:"GO",phrase:"go round",definition:"travel or move around, visiting several places",
+   sentence:"We went ___ several galleries in the old town before finding one we liked.",blank:"round"},
+  {group:"GO",phrase:"go through",definition:"experience something difficult or unpleasant",
+   sentence:"She went ___ a difficult divorce last year but came out stronger.",blank:"through"},
+  {group:"GO",phrase:"go off",definition:"turn sour or start to decay, used about food",
+   sentence:"Don't drink that milk — it's gone ___; it's been out of the fridge too long.",blank:"off"},
+  {group:"GO",phrase:"go on",definition:"happen, take place",
+   sentence:"What's going ___ here? Why is everyone standing in the corridor?",blank:"on"},
+
+  {group:"BE",phrase:"be on",definition:"be showing or being performed, e.g. a film or programme",
+   sentence:"What's ___ at the cinema this weekend? I fancy watching something new.",blank:"on"},
+  {group:"BE",phrase:"be over",definition:"have finished, come to an end",
+   sentence:"By the time we arrived, the meeting was already ___.",blank:"over"},
+  {group:"BE",phrase:"be about to",definition:"be on the point of doing something very soon",
+   sentence:"I was ___ to leave the house when the phone rang.",blank:"about"},
+  {group:"BE",phrase:"be for",definition:"support or be in favour of something",
+   sentence:"Are you ___ or against the new policy?",blank:"for"},
+  {group:"BE",phrase:"be up to",definition:"be doing something, often secretive or mischievous",
+   sentence:"The kids were suspiciously quiet upstairs — I wonder what they're ___ to.",blank:"up"},
+  {group:"BE",phrase:"be off",definition:"leave, depart",
+   sentence:"It's getting late, I'd better be ___ now.",blank:"off"}
+];
+const PV_GROUP_BANK={
+  COME:["come across","come into","come round","come up with","come down with","come round / to"],
+  GO:["go ahead with","go on with","go over","go with","go off","go round","go through","go on"],
+  BE:["be on","be over","be about to","be for","be up to","be off"]
+};
+
+// ==================== ДАННЫЕ: ПРЕДЛОГИ ====================
+const PREP_BANK=["at","in","for","of","with","to","on","about"];
+const PREP_COLLOC_ITEMS=[
+  {stem:"excellent ___",answer:"at"},
+  {stem:"experienced ___",answer:"in"},
+  {stem:"happy ___ somebody",answer:"for"},
+  {stem:"happy ___ something",answer:"with",accepted:["about"]},
+  {stem:"proud ___",answer:"of"},
+  {stem:"respected ___",answer:"for"},
+  {stem:"responsible ___",answer:"for"},
+  {stem:"an answer ___",answer:"to"},
+  {stem:"an expert ___",answer:"on",accepted:["in","at"]},
+  {stem:"take pride ___",answer:"in"},
+  {stem:"a reply ___",answer:"to"},
+  {stem:"a report ___",answer:"on"},
+  {stem:"an opportunity ___",answer:"for"},
+  {stem:"associate ___",answer:"with"},
+  {stem:"concentrate ___",answer:"on"},
+  {stem:"congratulate somebody ___ something",answer:"on"},
+  {stem:"cooperate ___",answer:"with"},
+  {stem:"deal ___",answer:"with"},
+  {stem:"include ___",answer:"in"},
+  {stem:"praise somebody ___ something",answer:"for"},
+  {stem:"provide somebody ___ something",answer:"with"},
+  {stem:"provide something ___ somebody",answer:"for"},
+  {stem:"succeed ___",answer:"in"},
+  {stem:"supply somebody ___ something",answer:"with"},
+  {stem:"supply something ___ somebody",answer:"to"}
+];
+const PREP_SENTENCE_ITEMS=[
+  {sentence:"Congratulations! I'm so happy for you ___ your new job.",answer:"on"},
+  {sentence:"This app will provide you ___ all the information you need.",answer:"with"},
+  {sentence:"Local farms supply the restaurant ___ fresh vegetables every morning.",answer:"with"},
+  {sentence:"She takes great pride ___ her work — it always shows.",answer:"in"},
+  {sentence:"The charity aims to provide opportunities ___ young people from disadvantaged backgrounds.",answer:"for"},
+  {sentence:"He was so proud ___ his daughter's achievement — he couldn't stop smiling!",answer:"of"},
+  {sentence:"The goods were supplied ___ customers within 48 hours.",answer:"to"},
+  {sentence:"She was praised for her report ___ the company's environmental impact.",answer:"on"}
+];
+
+// ==================== ДАННЫЕ: ПОХОЖИЕ СЛОВА ====================
+const GROUP_BANKS={
+  A:"job — occupation — work — employment — profession",
+  B:"task — course — duty",
+  C:"employer — employee — colleague — assistant — clerk — officer — attendant",
+  D:"party — crew — staff",
+  E:"aim — goal — intention — challenge — success — ambition",
+  F:"achieve — fulfil — cope — deal — face — succeed",
+  G:"manage — run — operate — undertake",
+  H:"skills — qualities — qualifications — experience"
+};
+const WORDS_ITEMS=[
+  {group:"A",sentence:"She's been looking for a part-time ___ to fit around her studies.",answer:"job"},
+  {group:"A",sentence:"The form asked for his ___, so he wrote teacher without hesitation.",answer:"occupation"},
+  {group:"A",sentence:"After the factory closed, hundreds of people lost their ___ overnight.",answer:"employment"},
+  {group:"A",sentence:"Medicine is a highly respected ___ that requires years of training.",answer:"profession"},
+  {group:"A",sentence:"Finding meaningful ___ was more important to her than earning a high salary.",answer:"work"},
+
+  {group:"B",sentence:"Sorting through a decade of paperwork was a tedious ___, but someone had to do it.",answer:"task"},
+  {group:"B",sentence:"As part of their ___ of study, all students must complete a semester abroad.",answer:"course"},
+  {group:"B",sentence:"It is the manager's ___ to ensure that health and safety regulations are followed.",answer:"duty"},
+
+  {group:"C",sentence:"Under the new law, every ___ must give staff at least four weeks' paid holiday a year.",answer:"employer"},
+  {group:"C",sentence:"She's not just a ___ — over the years we've become close friends.",answer:"colleague"},
+  {group:"C",sentence:"He works as a personal ___ to the CEO, managing her schedule and correspondence.",answer:"assistant"},
+  {group:"C",sentence:"The ___ at the bank counter processed my request within minutes.",answer:"clerk"},
+  {group:"C",sentence:"A customs ___ stopped us at the border to check our passports.",answer:"officer"},
+  {group:"C",sentence:"The ___ recognised loyal customers and often remembered their names.",answer:"attendant"},
+  {group:"C",sentence:"As a long-serving ___, she was entitled to a generous pension.",answer:"employee"},
+
+  {group:"D",sentence:"A rescue ___ was sent up the mountain as soon as the storm passed.",answer:"crew"},
+  {group:"D",sentence:"The hotel's ___ went out of their way to make our stay comfortable.",answer:"staff"},
+  {group:"D",sentence:"A ___ of tourists gathered outside the museum, waiting for it to open.",answer:"party"},
+  {group:"D",sentence:"The film's entire ___ worked through the night to finish shooting on schedule.",answer:"crew"},
+
+  {group:"E",sentence:"Her main ___ in life has always been to become a published novelist.",answer:"ambition"},
+  {group:"E",sentence:"Climbing the mountain without oxygen equipment was the ultimate ___ for the team.",answer:"challenge"},
+  {group:"E",sentence:"It was never his ___ to upset anyone — he simply spoke without thinking.",answer:"intention"},
+  {group:"E",sentence:"The scientist scored a major ___ when her research was published in a leading journal.",answer:"success"},
+  {group:"E",sentence:"Reducing plastic waste by half is the company's stated ___ for this year.",answer:"goal"},
+  {group:"E",sentence:"Learning a new language as an adult can be a real ___, but it's far from impossible.",answer:"challenge"},
+
+  {group:"F",sentence:"After years of hard work, she finally managed to ___ her dream of opening a restaurant.",answer:"achieve"},
+  {group:"F",sentence:"He struggled to ___ with the pressure of his new position at first.",answer:"cope"},
+  {group:"F",sentence:"It takes patience to ___ with difficult customers on a daily basis.",answer:"deal"},
+  {group:"F",sentence:"Despite the setbacks, the company managed to ___ in expanding into new markets.",answer:"succeed"},
+  {group:"F",sentence:"Many small businesses had to ___ serious financial difficulties during the crisis.",answer:"face"},
+  {group:"F",sentence:"The scholarship allowed her to ___ her ambition of studying medicine abroad.",answer:"fulfil"},
+
+  {group:"G",sentence:"She's been asked to ___ a major research project on climate change.",answer:"undertake"},
+  {group:"G",sentence:"His parents ___ a small family bakery in the town centre.",answer:"run"},
+  {group:"G",sentence:"The machines in this factory ___ around the clock, seven days a week.",answer:"operate"},
+  {group:"G",sentence:"It takes real skill to ___ a team of twenty people effectively.",answer:"manage"},
+
+  {group:"H",sentence:"To apply for this position, candidates need relevant ___ such as a degree in engineering.",answer:"qualifications"},
+  {group:"H",sentence:"Years of ___ in customer service have taught her how to stay calm under pressure.",answer:"experience"},
+  {group:"H",sentence:"Good communication and problem-solving ___ are essential for this role.",answer:"skills"},
+  {group:"H",sentence:"Honesty and patience are among the ___ that make her an excellent teacher.",answer:"qualities"}
+];
+const WORDFORM_ITEMS=[
+  {sentence:"The waterfall is a major tourist ___, drawing thousands of visitors every summer.",
+   options:["attractively","attractive","attraction"],answerIndex:2},
+  {sentence:"He reacted ___ when he found out someone had used his laptop without asking.",
+   options:["anger","angry","angrily"],answerIndex:2},
+  {sentence:"The pilot managed to land the damaged plane ___, and no one was hurt.",
+   options:["safe","safety","safely"],answerIndex:2},
+  {sentence:"Does it make any ___ whether we leave now or in an hour?",
+   options:["difference","differently","different"],answerIndex:0},
+  {sentence:"She's a professional ___ who specialises in wildlife photography.",
+   options:["photographer","photography","photographic"],answerIndex:0},
+  {sentence:"He's always been an ___ member of the local drama club.",
+   options:["activity","acting","active"],answerIndex:2},
+  {sentence:"The negotiations concluded ___, with both sides satisfied with the outcome.",
+   options:["success","successfully","successful"],answerIndex:1}
+];
+
+// ==================== ЗАДАНИЯ ====================
+function buildChoiceOptions(correct,pool,n){
+  n=n||4;
+  const distractors=shuffle(pool.filter(x=>x!==correct));
+  return shuffle([correct,...distractors.slice(0,n-1)]);
+}
+function shuffle(arr){const a=arr.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
+
+const TASK_PV={
+  id:"pv",name:"Фразовые глаголы · come / go / be",desc:"значение → форма → предложение",dictionary:true,
+  itemsFor(){return PV_ITEMS;},
+  levels:{
+    1:{desc:"Уровень 1 · соотнесите значение с глаголом",label:"Choose the correct phrasal verb:",mode:"choice",
+        prompt(it){return{main:it.definition,sub:""};},
+        correct(it){return{value:it.phrase,accepted:[it.phrase]};},
+        options(it){return buildChoiceOptions(it.phrase,PV_GROUP_BANK[it.group]);}},
+    2:{desc:"Уровень 2 · допишите предложение",label:"Type the missing word:",mode:"type",
+        prompt(it){return{main:gapHtml(it.sentence),sub:it.definition};},
+        correct(it){return{value:it.blank,accepted:[it.blank,...(it.blankAccepted||[])]};},
+        hint:"One word only — the missing particle/preposition."},
+    3:{desc:"Уровень 3 · произведите фразовый глагол",label:"Type the full phrasal verb:",mode:"type",
+        prompt(it){return{main:it.definition,sub:""};},
+        correct(it){return{value:it.phrase,accepted:[it.phrase]};},
+        hint:"Base form, e.g. 'come across'."}
+  }
+};
+const TASK_PREP={
+  id:"prep",name:"Предлоги с прилагательными и глаголами",desc:"устойчивые сочетания",
+  itemsFor(lvl){return lvl===2?PREP_SENTENCE_ITEMS:PREP_COLLOC_ITEMS;},
+  levels:{
+    1:{desc:"Уровень 1 · сочетание без контекста",label:"Choose the correct preposition:",mode:"choice",
+        prompt(it){return{main:gapHtml(it.stem),sub:""};},
+        correct(it){return{value:it.answer,accepted:[it.answer,...(it.accepted||[])]};},
+        options(it){return buildChoiceOptions(it.answer,PREP_BANK);}},
+    2:{desc:"Уровень 2 · предлог в предложении",label:"Type the missing preposition:",mode:"type",
+        prompt(it){return{main:gapHtml(it.sentence),sub:""};},
+        correct(it){return{value:it.answer,accepted:[it.answer,...(it.accepted||[])]};},
+        hint:"One preposition."}
+  }
+};
+const TASK_WORDS={
+  id:"words",name:"Похожие по смыслу слова",desc:"A–H + словообразование",
+  itemsFor(lvl){return lvl===2?WORDFORM_ITEMS:WORDS_ITEMS;},
+  levels:{
+    1:{desc:"Уровень 1 · выберите точное слово из группы",label:"Fill in the gap:",mode:"type",
+        prompt(it){return{main:gapHtml(it.sentence),sub:""};},
+        correct(it){return{value:it.answer,accepted:[it.answer]};},
+        hint(it){return GROUP_BANKS[it.group];}},
+    2:{desc:"Уровень 2 · словообразование",label:"Choose the correct word form:",mode:"choice",
+        prompt(it){return{main:gapHtml(it.sentence),sub:""};},
+        correct(it){return{value:it.options[it.answerIndex],accepted:[it.options[it.answerIndex]]};},
+        options(it){return shuffle(it.options);}}
+  }
+};
+const TASKS=[TASK_PV,TASK_PREP,TASK_WORDS];
+
+// ==================== ХРАНЕНИЕ ====================
+const KEY="ege_pv_words_trainer_v1";
+let store=loadStore();
+let task=null,level=1,current=null,answered=false;
+
+function loadStore(){try{const s=JSON.parse(localStorage.getItem(KEY));if(s&&s.tasks)return s;}catch(e){}return{tasks:{}};}
+function saveStore(){try{localStorage.setItem(KEY,JSON.stringify(store));}catch(e){}}
+function taskState(t){
+  if(!store.tasks[t.id]){
+    const cards={};
+    Object.keys(t.levels).forEach(l=>{t.itemsFor(+l).forEach((it,i)=>cards[l+"_"+i]={ease:2.5,interval:0,due:0,reps:0,mastery:0});});
+    store.tasks[t.id]={cards,step:0,answers:0,level:1};
+    saveStore();
+  }
+  return store.tasks[t.id];
+}
+function norm(s){return s.toLowerCase().trim().replace(/\s+/g," ").replace(/[.,;:!?"'’]/g,"");}
+function gapHtml(t){return t.replace("___","<span class='gap'>___</span>");}
+
+// ==================== SM-2 ====================
+function pick(){
+  const ts=taskState(task);const items=task.itemsFor(level);
+  const pool=items.map((it,i)=>({i,it,card:ts.cards[level+"_"+i]}));
+  const due=pool.filter(p=>p.card.due<=ts.step);
+  const base=due.length?due:pool;
+  const sorted=base.slice().sort((a,b)=>{
+    if(a.card.mastery!==b.card.mastery)return a.card.mastery-b.card.mastery;
+    if(a.card.ease!==b.card.ease)return a.card.ease-b.card.ease;
+    return Math.random()-0.5;});
+  const top=sorted.slice(0,Math.min(5,sorted.length));
+  return top[Math.floor(Math.random()*top.length)];
+}
+function upd(card,ok){
+  card.reps++;
+  if(ok){card.ease=Math.min(3,card.ease+0.1);card.interval=card.interval===0?2:Math.round(card.interval*card.ease);card.mastery=Math.min(5,card.mastery+1);}
+  else{card.ease=Math.max(1.3,card.ease-0.25);card.interval=1;card.mastery=Math.max(0,card.mastery-1);}
+  card.due=taskState(task).step+card.interval;
+}
+function levelMastery(t,l){const ts=taskState(t);const items=t.itemsFor(l);let s=0;
+  items.forEach((it,i)=>s+=ts.cards[l+"_"+i].mastery);
+  return items.length?Math.round((s/(items.length*5))*100):0;}
+function taskMastery(t){const keys=Object.keys(t.levels);let tot=0;keys.forEach(l=>tot+=levelMastery(t,+l));return Math.round(tot/keys.length);}
+
+// ==================== РЕНДЕР ====================
+const el=id=>document.getElementById(id);
+
+function renderMenu(){
+  el("menu").classList.remove("hidden");el("play").classList.add("hidden");
+  const list=el("taskList");list.innerHTML="";
+  TASKS.forEach(t=>{
+    const pct=taskMastery(t);
+    const d=document.createElement("div");d.className="task-card";
+    d.innerHTML="<div><div class='t-name'>"+t.name+"</div><div class='t-desc'>"+t.desc+"</div></div><div class='t-pct'>"+pct+"%</div>";
+    d.onclick=()=>openTask(t);
+    list.appendChild(d);
+  });
+}
+function openTask(t){
+  task=t;const ts=taskState(t);level=ts.level||1;
+  el("menu").classList.add("hidden");el("play").classList.remove("hidden");
+  el("dictBtn").classList.toggle("hidden",!t.dictionary);
+  const lr=el("levelRow");lr.innerHTML="";
+  Object.keys(t.levels).forEach(l=>{
+    const c=document.createElement("div");c.className="chip"+(+l===level?" active":"");
+    c.textContent=l;c.dataset.lvl=l;
+    c.onclick=()=>{level=+l;ts.level=level;saveStore();render();};
+    lr.appendChild(c);
+  });
+  render();
+}
+function render(){
+  const L=task.levels[level];
+  document.querySelectorAll("#levelRow .chip").forEach(c=>c.classList.toggle("active",+c.dataset.lvl===level));
+  el("lvldesc").textContent=L.desc;el("promptLabel").textContent=L.label;
+  current=pick();const it=current.it;
+  const p=L.prompt(it);
+  el("mainText").innerHTML=p.main;el("subText").textContent=p.sub||"";
+  el("feedback").textContent="";el("feedback").className="feedback";
+  el("answer").value="";answered=false;
+  el("checkBtn").classList.remove("hidden");el("nextBtn").classList.add("hidden");
+  stars(current.card.mastery);updStats();
+
+  if(L.mode==="choice"){
+    el("typeMode").classList.add("hidden");el("choiceMode").classList.remove("hidden");el("checkBtn").classList.add("hidden");
+    const opts=L.options(it);
+    const box=el("choices");box.innerHTML="";
+    opts.forEach(o=>{const b=document.createElement("div");b.className="choice";b.textContent=o;b.onclick=()=>choiceAns(b,o);box.appendChild(b);});
+    el("hint").textContent="";
+  }else{
+    el("typeMode").classList.remove("hidden");el("choiceMode").classList.add("hidden");el("checkBtn").classList.remove("hidden");
+    el("hint").textContent=typeof L.hint==="function"?L.hint(it):(L.hint||"");
+    setTimeout(()=>el("answer").focus(),80);
+  }
+}
+function stars(m){el("stars").textContent="★".repeat(m)+"☆".repeat(5-m);
+  el("stars").style.color=m>=4?"var(--sage)":m>=2?"var(--gold)":"var(--muted)";}
+function updStats(){const lm=levelMastery(task,level);const ts=taskState(task);
+  el("stats").innerHTML="Уровень "+level+": "+lm+"%<br>Ответов: "+ts.answers;
+  el("progress").style.width=lm+"%";}
+
+function afterAnswer(ok){
+  upd(current.card,ok);const ts=taskState(task);ts.step++;ts.answers++;saveStore();
+  stars(current.card.mastery);el("nextBtn").classList.remove("hidden");updStats();
+  if(ok)showStamp();
+}
+function showStamp(){const s=el("stamp");s.classList.remove("show");void s.offsetWidth;s.classList.add("show");}
+
+function choiceAns(btn,chosen){
+  if(answered)return;answered=true;
+  const L=task.levels[level];const corr=L.correct(current.it);
+  const accepted=corr.accepted.map(norm);
+  const ok=accepted.includes(norm(chosen));
+  document.querySelectorAll(".choice").forEach(c=>{
+    if(accepted.includes(norm(c.textContent)))c.classList.add("correct");
+    else if(c===btn&&!ok)c.classList.add("wrong");});
+  el("feedback").className="feedback "+(ok?"ok":"no");
+  el("feedback").innerHTML=ok?"✓ Correct!":"✗ Correct answer: <b>"+corr.value+"</b>";
+  el("checkBtn").classList.add("hidden");
+  afterAnswer(ok);
+}
+function doCheck(){
+  if(answered)return;const inp=el("answer").value;if(!inp.trim())return;
+  const L=task.levels[level];const corr=L.correct(current.it);
+  const ok=corr.accepted.map(norm).includes(norm(inp));
+  answered=true;
+  const fb=el("feedback");
+  if(ok){fb.className="feedback ok";fb.innerHTML="✓ Correct!";}
+  else{fb.className="feedback no";fb.innerHTML="✗ Correct answer: <span class='correct-answer'>"+corr.value+"</span>";}
+  el("checkBtn").classList.add("hidden");
+  afterAnswer(ok);
+}
+
+// ==================== СЛОВАРЬ ====================
+function openDict(){
+  const box=el("dictBody");box.innerHTML="";
+  const order=["COME","GO","BE"];
+  order.forEach(g=>{
+    const h=document.createElement("div");h.className="dict-group";h.textContent=g;box.appendChild(h);
+    PV_ITEMS.filter(it=>it.group===g).forEach(it=>{
+      const row=document.createElement("div");row.className="dict-row";
+      row.innerHTML="<span class='dict-phrase'>"+it.phrase+"</span><span class='dict-def'>"+it.definition+"</span>";
+      box.appendChild(row);
+    });
+  });
+  el("dictModal").classList.remove("hidden");
+}
+function closeDict(){el("dictModal").classList.add("hidden");}
+
+// ==================== СОБЫТИЯ ====================
+el("checkBtn").onclick=doCheck;
+el("nextBtn").onclick=render;
+el("answer").addEventListener("keydown",e=>{if(e.key==="Enter"){answered?render():doCheck();}});
+el("backBtn").onclick=()=>{renderMenu();};
+el("dictBtn").onclick=openDict;
+el("dictClose").onclick=closeDict;
+el("dictModal").addEventListener("click",e=>{if(e.target.id==="dictModal")closeDict();});
+el("resetAll").onclick=()=>{if(confirm("Сбросить весь прогресс по всем заданиям?")){store={tasks:{}};saveStore();renderMenu();}};
+
+renderMenu();
+</script>
+</body>
+</html>
